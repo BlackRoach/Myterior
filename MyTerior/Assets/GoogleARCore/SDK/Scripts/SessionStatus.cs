@@ -79,4 +79,12 @@ namespace GoogleARCore
         /// </summary>
         ErrorSessionConfigurationNotSupported = 203,
     }
+
+    public enum Select
+    {
+        None,
+        Floor,
+        Furniture,
+        Wall
+    }
 }
