@@ -20,6 +20,7 @@
 
 namespace GoogleARCore.Examples.ObjectManipulation
 {
+    using System.Collections.Generic;
     using GoogleARCore;
     using UnityEngine;
 
@@ -37,13 +38,24 @@ namespace GoogleARCore.Examples.ObjectManipulation
         /// <summary>
         /// A model to place when a raycast from a user touch hits a plane.
         /// </summary>
-        public GameObject AndyPrefab;
+        public GameObject FuniturePrefab;
 
         /// <summary>
         /// Manipulator prefab to attach placed objects to.
         /// </summary>
         public GameObject ManipulatorPrefab;
 
+       
+
+        private PlaneManager m_planeManager;
+        public void Start()
+        {
+            m_planeManager = PlaneManager.Instance;
+        }
+        public void SetFuniturePrefab(GameObject obj)
+        {
+            FuniturePrefab = obj;
+        }
         /// <summary>
         /// Returns true if the manipulation can be started for the given gesture.
         /// </summary>
@@ -83,6 +95,7 @@ namespace GoogleARCore.Examples.ObjectManipulation
             if (Frame.Raycast(
                 gesture.StartPosition.x, gesture.StartPosition.y, raycastFilter, out hit))
             {
+               
                 // Use hit pose and camera pose to check if hittest is from the
                 // back of the plane, if it is, no need to create the anchor.
                 if ((hit.Trackable is DetectedPlane) &&
@@ -91,11 +104,12 @@ namespace GoogleARCore.Examples.ObjectManipulation
                 {
                     Debug.Log("Hit at back of the current DetectedPlane");
                 }
-                else
+                else if(WindowClosed.Instance.IsClosed && m_planeManager.isSpawn)
                 {
                     // Instantiate Andy model at the hit pose.
-                    var andyObject = Instantiate(AndyPrefab, hit.Pose.position, hit.Pose.rotation);
-
+                    m_planeManager.isSpawn = false;
+                    var andyObject = Instantiate(FuniturePrefab, hit.Pose.position, hit.Pose.rotation);
+                 
                     // Instantiate manipulator.
                     var manipulator =
                         Instantiate(ManipulatorPrefab, hit.Pose.position, hit.Pose.rotation);

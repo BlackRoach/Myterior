@@ -20,13 +20,11 @@
 
 namespace GoogleARCore.Examples.Common
 {
+    using GoogleARCore.Examples.ObjectManipulation;
     using System.Collections.Generic;
     using GoogleARCore;
     using UnityEngine;
 
-    /// <summary>
-    /// Visualizes a single DetectedPlane in the Unity scene.
-    /// </summary>
     public class DetectedPlaneVisualizer : MonoBehaviour
     {
         private static int s_PlaneCount = 0;
@@ -34,7 +32,6 @@ namespace GoogleARCore.Examples.Common
         private readonly Color[] k_PlaneColors = new Color[]
         {
             new Color(1.0f, 1.0f, 1.0f),
-            new Color(0.320f, 0.863f, 0.059f),
             new Color(0.956f, 0.262f, 0.211f),
             new Color(0.913f, 0.117f, 0.388f),
             new Color(0.611f, 0.152f, 0.654f),
@@ -49,11 +46,11 @@ namespace GoogleARCore.Examples.Common
             new Color(0.803f, 0.862f, 0.223f),
             new Color(1.0f, 0.921f, 0.231f),
             new Color(1.0f, 0.756f, 0.027f)
-
         };
 
         private DetectedPlane m_DetectedPlane;
 
+        private PlaneManager m_planeManager;
         // Keep previous frame's mesh polygon to avoid mesh update every frame.
         private List<Vector3> m_PreviousFrameMeshVertices = new List<Vector3>();
         private List<Vector3> m_MeshVertices = new List<Vector3>();
@@ -66,17 +63,27 @@ namespace GoogleARCore.Examples.Common
         private Mesh m_Mesh;
 
         private MeshRenderer m_MeshRenderer;
-        
+        private MeshFilter m_meshFilter;
+        private MeshCollider ar_meshCollider;				//Abdul
+
         /// <summary>
         /// The Unity Awake() method.
         /// </summary>
         public void Awake()
         {
-            m_Mesh = GetComponent<MeshFilter>().mesh;
+            m_planeManager = PlaneManager.Instance;
+            ar_meshCollider = gameObject.AddComponent<MeshCollider>();         //Abdul
+            m_meshFilter = GetComponent<MeshFilter>();
             m_MeshRenderer = GetComponent<UnityEngine.MeshRenderer>();
-           
-        }
 
+            m_Mesh = new Mesh();
+            m_meshFilter.mesh = m_Mesh;
+            ar_meshCollider.sharedMesh = m_Mesh;
+
+         
+        }
+   
+       
         /// <summary>
         /// The Unity Update() method.
         /// </summary>
@@ -93,10 +100,18 @@ namespace GoogleARCore.Examples.Common
             }
             else if (m_DetectedPlane.TrackingState != TrackingState.Tracking)
             {
-                 m_MeshRenderer.enabled = false;
-                 return;
+                ar_meshCollider.enabled = false;
+                m_MeshRenderer.enabled = false;
+                return;
             }
-            
+            if(m_planeManager.isSpawn)
+            {
+                ar_meshCollider.enabled = false;
+                _UpdateMeshIfNeeded();
+                return;
+            }
+
+            ar_meshCollider.enabled = true;
             m_MeshRenderer.enabled = true;
 
             _UpdateMeshIfNeeded();
@@ -110,8 +125,8 @@ namespace GoogleARCore.Examples.Common
         {
             m_DetectedPlane = plane;
             m_MeshRenderer.material.SetColor(
-                "_GridColor", k_PlaneColors[1]);//s_PlaneCount++ % k_PlaneColors.Length]);
-            m_MeshRenderer.material.SetFloat("_UvRotation", Random.Range(0.0f, 360.0f));
+                "_GridColor", k_PlaneColors[0]);// s_PlaneCount++ % k_PlaneColors.Length]);
+            m_MeshRenderer.material.SetFloat("_UvRotation", 0);// Random.Range(0.0f, 360.0f));
 
             Update();
         }
@@ -211,6 +226,12 @@ namespace GoogleARCore.Examples.Common
             m_Mesh.SetVertices(m_MeshVertices);
             m_Mesh.SetTriangles(m_MeshIndices, 0);
             m_Mesh.SetColors(m_MeshColors);
+
+
+            if (ar_meshCollider.enabled)
+            {
+                ar_meshCollider.sharedMesh = m_Mesh;          
+            }
         }
 
         private bool _AreVerticesListsEqual(List<Vector3> firstList, List<Vector3> secondList)
